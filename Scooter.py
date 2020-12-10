@@ -3,16 +3,6 @@ import paho.mqtt.client as mqtt
 
 from Exceptions import WrongCommandException
 
-
-class Telemetry:
-    def __init__(self, battery: int, point):
-        self.battery = battery
-        self.point = point
-
-    def get_telemetry(self):
-        return json.dump(self.__dict__)
-
-
 SCOOTER = "scooter"
 
 
@@ -24,9 +14,7 @@ class Scooter:
         self.mqtt_client.on_message = self.on_message
         self.id = id
         self.mqtt_client.connect("test.mosquitto.org", 1883, 60)
-        self.client_id = None
         self.battery = 0
-        self.point = None
 
     def get_topic(self, command_type: str):
         command_type = command_type.lower()
@@ -45,14 +33,14 @@ class Scooter:
     def on_connect(self):
         self.mqtt_client.publish(self.get_topic("start"))
 
+    # potwierdzenie od serwera, że client jest ok
     def on_message(self):
         pass
 
-    def publish(self, command_type: str):
+    def publish(self, command_type: str, item=None):
         topic = self.get_topic(command_type)
         if command_type == "telemetry":
-            payload = Telemetry(self.battery, self.point).get_telemetry()
-            self.mqtt_client.publish(topic, payload)
+            self.mqtt_client.publish(topic, item)
         self.mqtt_client.publish(topic)
 
     # gdy w on_message dostaniemy potwierdzenie klienta
