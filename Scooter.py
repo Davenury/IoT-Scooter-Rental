@@ -14,7 +14,7 @@ class Scooter:
         self.mqtt_client.on_message = self.on_message
         self.id = id
         self.mqtt_client.connect("test.mosquitto.org", 1883, 60)
-        self.battery = 0
+        self.client_id = None
 
     def get_topic(self, command_type: str):
         command_type = command_type.lower()
