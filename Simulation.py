@@ -5,6 +5,7 @@ import string
 import openrouteservice
 import random
 import datetime
+from typing import List
 
 from Scooter import Scooter
 
@@ -18,9 +19,24 @@ def get_random_string(length):
 
 scooters = [Scooter(get_random_string(10)) for i in range(10)]
 
+krakow_coordx_center, krakow_coordy_center = 50.088594, 19.909286
+
+
+def get_zone(coord):
+    if krakow_coordx_center - 0.1 < coord[1] < krakow_coordx_center + 0.1 and \
+            krakow_coordy_center - 0.1 < coord[0] < krakow_coordy_center + 0.1:
+        return 1
+    return 2
+
+
+def get_price(zone, time_step):
+    return round(0.5 * zone * time_step.seconds / 60, 2)
+
 
 class Telemetry:
     def __init__(self,
+                 user_id: int,
+                 ride_id: int,
                  battery: int,
                  point,
                  time,
@@ -31,8 +47,16 @@ class Telemetry:
                  locked: bool,
                  length_of_ride_in_seconds: int,
                  kilometers_distance: int,
-                 is_riding: bool
+                 is_riding: bool,
+                 zone_id: int,
+                 pricing: float,
+                 mac: string,
+                 vehicle_type: int,
+                 reserved: dict,
+                 ready_to_ride: bool
                  ):
+        self.user_id = user_id
+        self.ride_id = ride_id
         self.battery = battery
         self.point = point
         self.time = time
@@ -44,6 +68,12 @@ class Telemetry:
         self.length_of_ride_in_seconds = length_of_ride_in_seconds
         self.kilometers_distance = kilometers_distance
         self.is_riding = is_riding
+        self.zone_id = zone_id
+        self.pricing = pricing
+        self.mac = mac
+        self.vehicle_type = vehicle_type
+        self.reserved = reserved
+        self.ready_to_ride = ready_to_ride
 
     def get_telemetry(self):
         return json.dumps(self.__dict__)
@@ -60,9 +90,6 @@ def get_client():
 def get_shift():
     vertical, horizontal = random.uniform(0, 0.1), random.uniform(0, 0.1)
     return vertical, horizontal
-
-
-krakow_coordx, krakow_coordy = 50.088594, 19.909286
 
 
 # coords = ((19.914522, 50.070803), (19.909029, 50.088318))
@@ -96,7 +123,11 @@ def simulate_ride(start_time, scooter):
         time_of_ride += time_step.seconds
         kilometers_distance += distance.distance(point, prev_point).km
         scooter.last_known_point = point
-        telemetry = Telemetry(battery,
+        zone = get_zone(point)
+        pricing = get_price(zone, time_step)
+        telemetry = Telemetry(scooter.user_id,
+                              scooter.ride,
+                              battery,
                               point,
                               start_time.timestamp(),
                               round(battery_temp, 2),
@@ -106,11 +137,21 @@ def simulate_ride(start_time, scooter):
                               False,
                               time_of_ride,
                               kilometers_distance,
+                              True,
+                              zone,
+                              pricing,
+                              scooter.mac,
+                              scooter.vehicle_type,
+                              {
+                                  "is_reserved": False,
+                                  "reserved_by": None
+                              },
                               True
                               )
         scooter.last_telemetry = telemetry
         yield telemetry.get_telemetry()
         prev_point = point
+    scooter.iterate_ride()
 
 
 def simulate_stop(scooter):
@@ -129,6 +170,13 @@ def simulate_stop(scooter):
     scooter.last_telemetry.length_of_ride_in_seconds = 0
     scooter.last_telemetry.kilometers_distance = 0
     scooter.last_telemetry.is_riding = False
+    scooter.last_telemetry.pricing = 0
+    scooter.last_telemetry.user_id = -1
+    if random.randint(0, 10) < 2:
+        scooter.last_telemetry.reserved.is_reserved = True
+        scooter.last_telemetry.reserved.reserved_by = "player_1"
+    if scooter.last_telemetry.battery < 30:
+        scooter.last_telemetry.ready_to_ride = False
     battery_temp_drop_step = max(random.randint(-20, 0), scooter.last_telemetry.battery_temp - 100)\
         if is_charging else random.randint(0, scooter.last_telemetry.battery_temp-20)
     battery_temp_drop_step /= ticks_in_not_riding
@@ -141,14 +189,19 @@ def simulate_stop(scooter):
 
 def simulate(year, month, day, hour, minutes, seconds, scooter):
     date = datetime.datetime(year, month, day, hour, minutes, seconds)
+    items = []
     for item in simulate_ride(date, scooter):
-        scooter.send(item)
-        sleep(0.01)
-        scooter.receive()
+        items.append(item)
+        #scooter.send(item)
+        #sleep(0.01)
+        #scooter.receive()
     for item in simulate_stop(scooter):
-        scooter.send(item)
-        sleep(0.01)
-        scooter.receive()
+        items.append(item)
+        #scooter.send(item)
+        #sleep(0.01)
+        #scooter.receive()
+    with open('results.txt', "w+") as file:
+        json.dump(items, file)
 
 
 simulate(2010, 3, 10, 18, 25, 19, scooters[0])

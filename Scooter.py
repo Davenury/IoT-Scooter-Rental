@@ -1,8 +1,12 @@
 import zmq
-
+import rstr
 from Exceptions import WrongCommandException
 
 SCOOTER = "scooter"
+
+
+def get_random_mac():
+    return rstr.xeger(r'[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}')
 
 
 class Scooter:
@@ -14,6 +18,13 @@ class Scooter:
         self.battery_circle = 0
         self.last_known_point = (19.909286, 50.088594)
         self.last_telemetry = None
+        self.mac = get_random_mac()
+        self.ride = 0
+        self.vehicle_type = 1
+        self.user_id = 0
+
+    def iterate_ride(self):
+        self.ride += 1
 
     def init_zmq(self):
         self.context = zmq.Context()
@@ -34,3 +45,6 @@ class Scooter:
     # gdy w on_message dostaniemy koniec klienta
     def delete_client_id(self):
         self.client_id = None
+
+    def set_user_id(self, user_id):
+        self.user_id = user_id
