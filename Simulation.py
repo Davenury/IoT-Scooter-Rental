@@ -1,23 +1,15 @@
 import json
+import string
 from time import sleep
 from geopy import distance
-import string
 import openrouteservice
 import random
 import datetime
-from typing import List
+from Scooter import Scooter, get_random_string
 
-from Scooter import Scooter
 
 TIME_INTERVAL_FOR_NOT_RIDING = 30
 
-
-def get_random_string(length):
-    letters = string.ascii_lowercase
-    return ''.join(random.choice(letters) for i in range(length))
-
-
-scooters = [Scooter(get_random_string(10)) for i in range(10)]
 
 krakow_coordx_center, krakow_coordy_center = 50.088594, 19.909286
 
@@ -35,6 +27,7 @@ def get_price(zone, time_step):
 
 class Telemetry:
     def __init__(self,
+                 scooter_id: string,
                  user_id: int,
                  ride_id: int,
                  battery: int,
@@ -55,6 +48,7 @@ class Telemetry:
                  reserved: dict,
                  ready_to_ride: bool
                  ):
+        self.scooter_id = scooter_id
         self.user_id = user_id
         self.ride_id = ride_id
         self.battery = battery
@@ -92,9 +86,6 @@ def get_shift():
     return vertical, horizontal
 
 
-# coords = ((19.914522, 50.070803), (19.909029, 50.088318))
-
-
 def get_basic(prev_point):
     shift = get_shift()
     coords = (prev_point, (prev_point[0] + shift[0], prev_point[1] + shift[1]))
@@ -116,6 +107,8 @@ def simulate_ride(start_time, scooter):
     time_of_ride = 0
     kilometers_distance = 0
     prev_point = points[0]
+    user_id = get_random_string(6)
+    scooter.set_user_id(user_id)
     for point in points:
         start_time += time_step
         battery -= battery_drop_step
@@ -125,7 +118,8 @@ def simulate_ride(start_time, scooter):
         scooter.last_known_point = point
         zone = get_zone(point)
         pricing = get_price(zone, time_step)
-        telemetry = Telemetry(scooter.user_id,
+        telemetry = Telemetry(scooter.id,
+                              scooter.user_id,
                               scooter.ride,
                               battery,
                               point,
@@ -173,8 +167,8 @@ def simulate_stop(scooter):
     scooter.last_telemetry.pricing = 0
     scooter.last_telemetry.user_id = -1
     if random.randint(0, 10) < 2:
-        scooter.last_telemetry.reserved.is_reserved = True
-        scooter.last_telemetry.reserved.reserved_by = "player_1"
+        scooter.last_telemetry.reserved['is_reserved'] = True
+        scooter.last_telemetry.reserved['reserved_by'] = "player_1"
     if scooter.last_telemetry.battery < 30:
         scooter.last_telemetry.ready_to_ride = False
     battery_temp_drop_step = max(random.randint(-20, 0), scooter.last_telemetry.battery_temp - 100)\
@@ -189,19 +183,17 @@ def simulate_stop(scooter):
 
 def simulate(year, month, day, hour, minutes, seconds, scooter):
     date = datetime.datetime(year, month, day, hour, minutes, seconds)
-    items = []
+    #items = []
     for item in simulate_ride(date, scooter):
-        items.append(item)
-        #scooter.send(item)
-        #sleep(0.01)
-        #scooter.receive()
+        #items.append(item)
+        scooter.send(item)
+        sleep(0.01)
+        scooter.receive()
     for item in simulate_stop(scooter):
-        items.append(item)
-        #scooter.send(item)
-        #sleep(0.01)
-        #scooter.receive()
-    with open('results.txt', "w+") as file:
-        json.dump(items, file)
+        #items.append(item)
+        scooter.send(item)
+        sleep(0.01)
+        scooter.receive()
+    #with open('results.txt', "w+") as file:
+     #   json.dump(items, file)
 
-
-simulate(2010, 3, 10, 18, 25, 19, scooters[0])

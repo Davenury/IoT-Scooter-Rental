@@ -1,8 +1,15 @@
+import random
+
 import zmq
 import rstr
-from Exceptions import WrongCommandException
+import string
 
 SCOOTER = "scooter"
+
+
+def get_random_string(length):
+    letters = string.ascii_lowercase
+    return ''.join(random.choice(letters) for i in range(length))
 
 
 def get_random_mac():
@@ -13,8 +20,7 @@ class Scooter:
     def __init__(self, id):
         self.init_zmq()
         self.id = id
-        self.client_id = None
-        self.battery_model = "dsadsa"  # -> random battery model
+        self.battery_model = get_random_string(6)  # -> random battery model
         self.battery_circle = 0
         self.last_known_point = (19.909286, 50.088594)
         self.last_telemetry = None
@@ -37,14 +43,6 @@ class Scooter:
     def receive(self):
         message = self.socket.recv()
         print(message)
-
-    # gdy w on_message dostaniemy potwierdzenie klienta
-    def set_client_id(self, client_id: int):
-        self.client_id = client_id
-
-    # gdy w on_message dostaniemy koniec klienta
-    def delete_client_id(self):
-        self.client_id = None
 
     def set_user_id(self, user_id):
         self.user_id = user_id
