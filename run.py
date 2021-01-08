@@ -3,7 +3,7 @@ import threading
 from Scooter import Scooter, get_random_string
 from Simulation import simulate
 
-scooters = [Scooter(get_random_string(10)) for i in range(10)]
+scooters = [Scooter(i) for i in range(10)]
 
 
 def threading_fun(scooter):
