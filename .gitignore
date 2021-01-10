@@ -1,4 +1,4 @@
 /.idea/**
 /env/**
-credentials.json
+others/credentials.json
 /certificates/**

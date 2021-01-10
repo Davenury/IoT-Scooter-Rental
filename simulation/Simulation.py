@@ -1,12 +1,9 @@
 import json
 import string
-from time import sleep
 from geopy import distance
 import openrouteservice
 import random
 import datetime
-from Scooter import Scooter, get_random_string
-
 
 TIME_INTERVAL_FOR_NOT_RIDING = 30
 
@@ -104,7 +101,7 @@ class Telemetry:
 
 
 def get_client():
-    with open('credentials.json') as json_file:
+    with open('others/credentials.json') as json_file:
         data = json.load(json_file)
 
     key = data.get('key')

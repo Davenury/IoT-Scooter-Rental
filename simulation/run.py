@@ -1,9 +1,5 @@
-import datetime
-import random
-import threading
-
-from Scooter import Scooter, get_random_string
-from Simulation import simulate, get_basic, Telemetry, get_zone, get_price
+from devices.Scooter import Scooter
+from simulation.Simulation import simulate
 
 scooters = [Scooter(i+1) for i in range(10)]
 

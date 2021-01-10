@@ -1,5 +1,4 @@
-from Scooter import Scooter
-import os
+from devices.Scooter import Scooter
 
 if __name__ == "__main__":
     scooter = Scooter(1)
