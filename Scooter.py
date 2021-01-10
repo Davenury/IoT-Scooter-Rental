@@ -1,11 +1,9 @@
+import json
 import random
 
 import rstr
 import string
 import os
-import paho.mqtt.client as mqtt
-import time as t
-import json
 import AWSIoTPythonSDK.MQTTLib as AWSIoTPyMQTT
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -33,30 +31,31 @@ def get_random_mac():
 class Scooter:
     def __init__(self, id):
         self.AWSIoTMQTTClient = AWSIoTPyMQTT.AWSIoTMQTTClient(str(id))
-        self.configure_mqtt()
         self.id = id
         self.battery_model = get_random_string(6)  # -> random battery model
         self.battery_cycle = 0
         self.last_known_point = (19.909286, 50.088594)
         self.last_telemetry = None
         self.mac = get_random_mac()
-        self.ride = 0
+        self.ride = -1
         self.vehicle_type = 1
-        self.user_id = 0
+        self.user_id = -1
+        self.configure_mqtt()
 
     def configure_mqtt(self):
         self.AWSIoTMQTTClient.configureEndpoint(ENDPOINT, 8883)
         self.AWSIoTMQTTClient.configureCredentials(PATH_TO_ROOT, PATH_TO_KEY, PATH_TO_CERT)
         self.AWSIoTMQTTClient.connect()
+        wrapper = lambda x, y, z: begin_ride_message(self, x, y, z)
+        self.AWSIoTMQTTClient.subscribe('scooter/{0}/begin_response'.format(self.id), 1, wrapper)
 
     def get_ride_id(self):
-        return self.id + str(self.ride)
+        return self.id + self.ride
 
     def iterate_ride(self):
         self.ride += 1
 
     def send(self, message):
-        print('scooter/{0}'.format(self.id), message)
         self.AWSIoTMQTTClient.publish('scooter/{0}'.format(self.id), message, 1)
 
     def set_user_id(self, user_id):
@@ -64,3 +63,13 @@ class Scooter:
 
     def disconnect(self):
         self.AWSIoTMQTTClient.disconnect()
+
+    def send_begin(self, message):
+        self.AWSIoTMQTTClient.publish('scooter/{0}/begin'.format(self.id), message, 1)
+
+
+def begin_ride_message(scooter, client, userdata, message):
+    payload = json.loads(message.payload.decode('utf8'))
+    scooter.set_user_id(payload['client_id'])
+    scooter.ride = payload['ride_id']
+    print(scooter.user_id, scooter.ride)
