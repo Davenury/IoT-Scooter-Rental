@@ -6,12 +6,12 @@ import string
 import os
 import AWSIoTPythonSDK.MQTTLib as AWSIoTPyMQTT
 
-dir_path = os.path.dirname(os.path.realpath(__file__))
+dir_path = os.path.dirname(os.path.realpath(__file__)) + "\\"
 ENDPOINT = "a1r8jjr1mg7i8s-ats.iot.us-east-1.amazonaws.com"
 # CLIENT_ID = "testDevice"
-PATH_TO_CERT = "certificates/25ebfe00c3-certificate.pem.crt"
-PATH_TO_KEY = "certificates/25ebfe00c3-private.pem.key"
-PATH_TO_ROOT = "certificates/CA.pem"
+PATH_TO_CERT = "..\\certificates\\25ebfe00c3-certificate.pem.crt"
+PATH_TO_KEY = "..\\certificates\\25ebfe00c3-private.pem.key"
+PATH_TO_ROOT = "..\\certificates\\CA.pem"
 MESSAGE = "Hello World"
 TOPIC = "test/testing"
 RANGE = 20
@@ -48,9 +48,6 @@ class Scooter:
         self.AWSIoTMQTTClient.connect()
         wrapper = lambda x, y, z: begin_ride_message(self, x, y, z)
         self.AWSIoTMQTTClient.subscribe('scooter/{0}/begin_response'.format(self.id), 1, wrapper)
-
-    def get_ride_id(self):
-        return self.id + self.ride
 
     def iterate_ride(self):
         self.ride += 1

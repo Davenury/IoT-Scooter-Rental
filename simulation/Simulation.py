@@ -1,5 +1,7 @@
 import json
 import string
+from time import sleep
+
 from geopy import distance
 import openrouteservice
 import random
@@ -71,7 +73,8 @@ class Telemetry:
 
     @staticmethod
     def get_random_telemetry(scooter, start_time):
-        time, points, battery = get_basic(scooter.last_known_point)
+        time, points = get_basic(scooter.last_known_point)
+        battery = 90
         battery_temp = random.randint(20, 60)
         time_of_ride = 0
         kilometers_distance = 0
@@ -94,14 +97,14 @@ class Telemetry:
                               pricing,
                               scooter.mac,
                               scooter.vehicle_type,
-                              None,
+                              -1,
                               True
                               )
         return telemetry
 
 
 def get_client():
-    with open('others/credentials.json') as json_file:
+    with open('..\\others\\credentials.json') as json_file:
         data = json.load(json_file)
 
     key = data.get('key')
@@ -109,24 +112,32 @@ def get_client():
 
 
 def get_shift():
-    vertical, horizontal = random.uniform(0, 0.1), random.uniform(0, 0.1)
+    vertical, horizontal = 0, 0
+    while vertical == 0 and horizontal == 0:
+        vertical, horizontal = random.uniform(-0.1, 0.1), random.uniform(-0.1, 0.1)
     return vertical, horizontal
 
 
 def get_basic(prev_point):
-    shift = get_shift()
-    coords = (prev_point, (prev_point[0] + shift[0], prev_point[1] + shift[1]))
-    routes = get_client().directions(coords, profile='cycling-regular', format="geojson")
-    time = routes.get('features')[0].get('properties').get('summary').get('duration')
-    points = routes.get('features')[0].get('geometry').get('coordinates')
-    battery = random.randint(20, 100)
-    return time, points, battery
+    time = 0
+    points = []
+    while time == 0:
+        try:
+            shift = get_shift()
+            coords = (prev_point, (prev_point[0] + shift[0], prev_point[1] + shift[1]))
+            routes = get_client().directions(coords, profile='cycling-regular', format="geojson")
+            time = routes.get('features')[0].get('properties').get('summary').get('duration')
+            points = routes.get('features')[0].get('geometry').get('coordinates')
+        except:
+            pass
+    return time, points
 
 
 # start_time = czas, w którym wysyłamy
 def simulate_ride(start_time, scooter):
-    time, points, battery = get_basic(scooter.last_known_point)
-    battery_drop_step, time_step = random.randrange(10, battery) / len(points), datetime.timedelta(
+    time, points = get_basic(scooter.last_telemetry.point)
+    battery = scooter.last_telemetry.battery
+    battery_drop_step, time_step = random.randrange(10, int(battery)) / len(points), datetime.timedelta(
         seconds=time / len(points))
     battery_temp = random.randint(20, 60)
     battery_temp_end = battery_temp + random.randint(5, 19)
@@ -162,7 +173,7 @@ def simulate_ride(start_time, scooter):
                               pricing,
                               scooter.mac,
                               scooter.vehicle_type,
-                              None,
+                              -1,
                               True,
                               )
         scooter.last_telemetry = telemetry
@@ -176,6 +187,9 @@ def simulate_stop(scooter):
     time_of_not_riding_in_seconds = random.randint(5, 43200)
     ticks_in_not_riding = time_of_not_riding_in_seconds / TIME_INTERVAL_FOR_NOT_RIDING
     is_charging = random.choice([True, False])
+    if scooter.last_telemetry.battery < 20:
+        is_charging = True
+        scooter.last_telemetry.battery = 20
     is_locked = True
     battery_charging_step = 0 if not is_charging else random.randint(round(scooter.last_telemetry.battery, 0), 100) / ticks_in_not_riding
     if not is_charging:
@@ -203,25 +217,30 @@ def simulate_stop(scooter):
         scooter.last_telemetry.battery += battery_charging_step
         scooter.last_telemetry.time += min(TIME_INTERVAL_FOR_NOT_RIDING, time_of_not_riding_in_seconds-i)
         scooter.last_telemetry.battery_temp -= battery_temp_drop_step
+        if scooter.last_telemetry.battery > 100:
+            scooter.last_telemetry.battery = 100
         yield scooter.last_telemetry.get_telemetry()
 
 
 def simulate(year, month, day, hour, minutes, seconds, scooter):
     date = datetime.datetime(year, month, day, hour, minutes, seconds)
-    scooter.send_begin(Telemetry.get_random_telemetry(scooter, date).get_telemetry())
-    while scooter.user_id == -1:
-        pass
-    #items = []
-    for item in simulate_ride(date, scooter):
-        #items.append(item)
-        scooter.send(item)
-        #sleep(0.01)
-        print(item)
-    for item in simulate_stop(scooter):
-        #items.append(item)
-        scooter.send(item)
-        #sleep(0.01)
-        print(item)
-    #with open('results.txt', "w+") as file:
-     #   json.dump(items, file)
+    scooter.last_telemetry = Telemetry.get_random_telemetry(scooter, date)
+    for i in range(0, 5):
+        scooter.last_telemetry.time += 10
+        scooter.send_begin(scooter.last_telemetry.get_telemetry())
+        while scooter.user_id == -1:
+            pass
+        #items = []
+        for item in simulate_ride(datetime.datetime.fromtimestamp(scooter.last_telemetry.time), scooter):
+            #items.append(item)
+            scooter.send(item)
+            # sleep(0.01)
+            # print(item)
+        for item in simulate_stop(scooter):
+            #items.append(item)
+            scooter.send(item)
+            # sleep(0.01)
+            # print(item)
+        #with open('results.txt', "w+") as file:
+         #   json.dump(items, file)
 
