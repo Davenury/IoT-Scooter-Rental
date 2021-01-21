@@ -6,6 +6,8 @@ import string
 import os
 import AWSIoTPythonSDK.MQTTLib as AWSIoTPyMQTT
 
+from others.scooter_prepare import prepare_scooter
+
 dir_path = os.path.dirname(os.path.realpath(__file__)) + "\\"
 ENDPOINT = "a1r8jjr1mg7i8s-ats.iot.us-east-1.amazonaws.com"
 # CLIENT_ID = "testDevice"
@@ -36,18 +38,19 @@ class Scooter:
         self.battery_cycle = 0
         self.last_known_point = (19.909286, 50.088594)
         self.last_telemetry = None
-        self.mac = get_random_mac()
+        self.mac = None
         self.ride = -1
         self.vehicle_type = 1
         self.user_id = -1
+        prepare_scooter(self)
         self.configure_mqtt()
 
     def configure_mqtt(self):
         self.AWSIoTMQTTClient.configureEndpoint(ENDPOINT, 8883)
         self.AWSIoTMQTTClient.configureCredentials(PATH_TO_ROOT, PATH_TO_KEY, PATH_TO_CERT)
         self.AWSIoTMQTTClient.connect()
-        wrapper = lambda x, y, z: begin_ride_message(self, x, y, z)
-        self.AWSIoTMQTTClient.subscribe('scooter/{0}/begin_response'.format(self.id), 1, wrapper)
+        begin_response_wrapper = lambda x, y, z: begin_ride_message(self, x, y, z)
+        self.AWSIoTMQTTClient.subscribe('scooter/{0}/begin_response'.format(self.id), 1, begin_response_wrapper)
 
     def iterate_ride(self):
         self.ride += 1

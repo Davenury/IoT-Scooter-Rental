@@ -7,6 +7,8 @@ import openrouteservice
 import random
 import datetime
 
+from devices import Telemetry
+
 TIME_INTERVAL_FOR_NOT_RIDING = 30
 
 
@@ -22,85 +24,6 @@ def get_zone(coord):
 
 def get_price(zone, time_step):
     return round(0.5 * zone * time_step.seconds / 60, 2)
-
-
-class Telemetry:
-    def __init__(self,
-                 scooter_id: int,
-                 user_id: int,
-                 ride_id: str,
-                 battery: int,
-                 point,
-                 time,
-                 battery_temp: float,
-                 is_charging: bool,
-                 battery_model: str,
-                 battery_cycle: int,
-                 is_locked: bool,
-                 length_of_ride_in_seconds: int,
-                 kilometers_distance: float,
-                 is_riding: bool,
-                 zone_id: int,
-                 pricing: float,
-                 mac: string,
-                 vehicle_type: int,
-                 reserved: int,
-                 ready_to_ride: bool,
-                 ):
-        self.scooter_id = scooter_id
-        self.client_id = user_id
-        self.ride_id = ride_id
-        self.battery = battery
-        self.point = point
-        self.time = time
-        self.battery_temp = battery_temp
-        self.is_charging = is_charging
-        self.battery_model = battery_model
-        self.battery_cycle = battery_cycle
-        self.is_locked = is_locked
-        self.length_of_ride_in_seconds = length_of_ride_in_seconds
-        self.kilometers_distance = kilometers_distance
-        self.is_riding = is_riding
-        self.zone_id = zone_id
-        self.pricing = pricing
-        self.mac = mac
-        self.vehicle_type = vehicle_type
-        self.reserved = reserved
-        self.ready_to_ride = ready_to_ride
-
-    def get_telemetry(self):
-        return json.dumps(self.__dict__)
-
-    @staticmethod
-    def get_random_telemetry(scooter, start_time):
-        time, points = get_basic(scooter.last_known_point)
-        battery = 90
-        battery_temp = random.randint(20, 60)
-        time_of_ride = 0
-        kilometers_distance = 0
-        pricing = 0
-        telemetry = Telemetry(scooter.id,
-                              scooter.user_id,
-                              scooter.ride,
-                              battery,
-                              points[0],
-                              start_time.timestamp(),
-                              round(battery_temp, 2),
-                              False,
-                              scooter.battery_model,
-                              scooter.battery_cycle,
-                              False,
-                              time_of_ride,
-                              kilometers_distance,
-                              True,
-                              get_zone(points[0]),
-                              pricing,
-                              scooter.mac,
-                              scooter.vehicle_type,
-                              -1,
-                              True
-                              )
-        return telemetry
 
 
 def get_client():
@@ -144,7 +67,7 @@ def simulate_ride(start_time, scooter):
     battery_temp_rise_step = (battery_temp_end - battery_temp) / len(points)
     time_of_ride = 0
     kilometers_distance = 0
-    prev_point = points[0]
+    prev_point = scooter.last_telemetry.point
     pricing = 0
     for idx, point in enumerate(points):
         start_time += time_step
@@ -155,7 +78,7 @@ def simulate_ride(start_time, scooter):
         scooter.last_known_point = point
         zone = get_zone(point)
         pricing += get_price(zone, time_step)
-        telemetry = Telemetry(scooter.id,
+        telemetry = Telemetry.Telemetry(scooter.id,
                               scooter.user_id,
                               scooter.ride,
                               battery,
@@ -224,8 +147,8 @@ def simulate_stop(scooter):
 
 def simulate(year, month, day, hour, minutes, seconds, scooter):
     date = datetime.datetime(year, month, day, hour, minutes, seconds)
-    scooter.last_telemetry = Telemetry.get_random_telemetry(scooter, date)
-    for i in range(0, 5):
+    scooter.last_telemetry = Telemetry.Telemetry.get_random_telemetry(scooter, date)
+    for i in range(0, random.randint(5, 10)):
         scooter.last_telemetry.time += 10
         scooter.send_begin(scooter.last_telemetry.get_telemetry())
         while scooter.user_id == -1:

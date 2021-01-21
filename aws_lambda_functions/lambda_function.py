@@ -36,7 +36,6 @@ def handler(event, contex):
                 (event['kilometers_distance'], event['pricing'], event['time'], event['ride_id'])
             )
 
-        state = None
         if event['is_riding']:
             state = 'IN_RUN'
         elif event['is_charging'] or event['reserved_by'] != -1:
