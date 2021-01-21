@@ -1,6 +1,6 @@
 import json
-from random import random
-
+import random
+import datetime
 from simulation.Simulation import get_basic, get_zone
 
 
@@ -52,7 +52,7 @@ class Telemetry:
         return json.dumps(self.__dict__)
 
     @staticmethod
-    def get_random_telemetry(scooter, start_time):
+    def get_random_telemetry(scooter, start_time=datetime.datetime.now()):
         time, points = get_basic(scooter.last_known_point)
         battery = 90
         battery_temp = random.randint(20, 60)

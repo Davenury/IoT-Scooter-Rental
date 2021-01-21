@@ -49,11 +49,6 @@ class Scooter:
         self.AWSIoTMQTTClient.configureEndpoint(ENDPOINT, 8883)
         self.AWSIoTMQTTClient.configureCredentials(PATH_TO_ROOT, PATH_TO_KEY, PATH_TO_CERT)
         self.AWSIoTMQTTClient.connect()
-        begin_response_wrapper = lambda x, y, z: begin_ride_message(self, x, y, z)
-        self.AWSIoTMQTTClient.subscribe('scooter/{0}/begin_response'.format(self.id), 1, begin_response_wrapper)
-
-    def iterate_ride(self):
-        self.ride += 1
 
     def send(self, message):
         self.AWSIoTMQTTClient.publish('scooter/{0}'.format(self.id), message, 1)
@@ -67,9 +62,5 @@ class Scooter:
     def send_begin(self, message):
         self.AWSIoTMQTTClient.publish('scooter/{0}/begin'.format(self.id), message, 1)
 
-
-def begin_ride_message(scooter, client, userdata, message):
-    payload = json.loads(message.payload.decode('utf8'))
-    scooter.set_user_id(payload['client_id'])
-    scooter.ride = payload['ride_id']
-    print(scooter.user_id, scooter.ride)
+    def send_end(self, message):
+        self.AWSIoTMQTTClient.publish('scooter/{0}/end_ride'.format(self.id), message, 1)

@@ -7,6 +7,7 @@ import openrouteservice
 import random
 import datetime
 
+from database.begin_ride import set_begin_attributes
 from devices import Telemetry
 
 TIME_INTERVAL_FOR_NOT_RIDING = 30
@@ -102,7 +103,7 @@ def simulate_ride(start_time, scooter):
         scooter.last_telemetry = telemetry
         yield telemetry.get_telemetry()
         prev_point = point
-    scooter.iterate_ride()
+    scooter.send_end(scooter.last_telemetry.get_telemetry())
 
 
 def simulate_stop(scooter):
@@ -147,10 +148,12 @@ def simulate_stop(scooter):
 
 def simulate(year, month, day, hour, minutes, seconds, scooter):
     date = datetime.datetime(year, month, day, hour, minutes, seconds)
-    scooter.last_telemetry = Telemetry.Telemetry.get_random_telemetry(scooter, date)
+    scooter.last_telemetry.time = date.timestamp()
+    # scooter.last_telemetry = Telemetry.Telemetry.get_random_telemetry(scooter, date)
     for i in range(0, random.randint(5, 10)):
         scooter.last_telemetry.time += 10
         scooter.send_begin(scooter.last_telemetry.get_telemetry())
+        set_begin_attributes(scooter)
         while scooter.user_id == -1:
             pass
         #items = []

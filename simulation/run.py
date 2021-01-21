@@ -16,8 +16,7 @@ def threading_fun(scooter):
 
 
 if __name__ == "__main__":
-    #for scooter in scooters:
-    for i in range(0, 11):
-        threading_fun(scooters[i])
-        # x = threading.Thread(target=threading_fun, args=(scooter,))
-        # x.start()
+    for scooter in scooters:
+        # threading_fun(scooter)
+        x = threading.Thread(target=threading_fun, args=(scooter,))
+        x.start()
