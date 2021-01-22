@@ -55,7 +55,7 @@ class Telemetry:
     def get_random_telemetry(scooter, start_time=datetime.datetime.now()):
         time, points = get_basic(scooter.last_known_point)
         battery = 90
-        battery_temp = random.randint(20, 60)
+        battery_temp = 30
         time_of_ride = 0
         kilometers_distance = 0
         pricing = 0

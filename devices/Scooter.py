@@ -41,9 +41,17 @@ class Scooter:
         self.mac = None
         self.ride = -1
         self.vehicle_type = 1
+        # if self.vehicle_type == 1:
+        #     self.battery_model = ""
+        # elif self.vehicle_type == 2:
+        #     self.battery_model = "Dualtron Thunder"
+        # elif vehicle_type == 3:
+        #     self.battery_model = "AGDA Electirc"
         self.user_id = -1
         prepare_scooter(self)
         self.configure_mqtt()
+        self.battery_drop_function = None
+        self.battery_raise_temp_function = None
 
     def configure_mqtt(self):
         self.AWSIoTMQTTClient.configureEndpoint(ENDPOINT, 8883)
@@ -64,3 +72,21 @@ class Scooter:
 
     def send_end(self, message):
         self.AWSIoTMQTTClient.publish('scooter/{0}/end_ride'.format(self.id), message, 1)
+
+    def set_battery_drop_function(self, function):
+        self.battery_drop_function = function
+
+    def set_battery_raise_temp_function(self, function):
+        self.battery_raise_temp_function = function
+
+    def battery_drop_step(self, step):
+        if self.battery_drop_function is None:
+            return self.last_telemetry.battery - step
+        else:
+            return self.battery_drop_function(self)
+
+    def battery_raise_temp_step(self, step):
+        if self.battery_raise_temp_function is None:
+            return self.last_telemetry.battery_temp - step
+        else:
+            return self.battery_raise_temp_function(self)

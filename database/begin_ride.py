@@ -26,7 +26,6 @@ def begin_ride(scooter, conn):
 
 def set_begin_attributes(scooter):
     print("before while")
-
     try:
         conn = psycopg2.connect(host="scooter-database.cciikk1f6cy6.us-east-1.rds.amazonaws.com", port=5432,
                                 dbname="postgres", user="scooter",
@@ -43,3 +42,5 @@ def set_begin_attributes(scooter):
             conn.close()
         except:
             pass
+        if scooter.ride == -1 and scooter.user_id == -1:
+            set_begin_attributes(scooter)

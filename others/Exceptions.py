@@ -1,2 +1,2 @@
-class WrongCommandException(Exception):
+class StopSimulationException(Exception):
     pass

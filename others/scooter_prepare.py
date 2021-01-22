@@ -1,3 +1,4 @@
+from datetime import datetime
 from time import sleep
 
 import psycopg2
@@ -23,7 +24,14 @@ def get_info(scooter_id):
             (scooter_id,)
         )
         info = cur.fetchone()
-        return info
+
+        cur.execute(
+            "select ST_X(location), ST_Y(location) from scooters as s left join scooter_info as si on s.id = si.scooter_id where s.id = %s"
+            "order by actual_time desc limit 1",
+            (scooter_id,)
+        )
+        x, y = cur.fetchone()
+        return info, x, y
 
 
     finally:
@@ -34,7 +42,7 @@ def get_info(scooter_id):
 
 
 def prepare_scooter(scooter):
-    info = get_info(scooter.id)
+    info, x, y = get_info(scooter.id)
     scooter.battery_model = info[1]
     scooter.mac = info[2]
     scooter.vehicle_type = info[3]
@@ -44,8 +52,8 @@ def prepare_scooter(scooter):
             -1,
             -1,
             info[8],
-            info[7],
-            info[5],
+            (x, y),
+            datetime.timestamp(info[5]),
             info[9],
             info[11],
             scooter.battery_model,

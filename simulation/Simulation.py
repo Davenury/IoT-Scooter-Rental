@@ -9,6 +9,7 @@ import datetime
 
 from database.begin_ride import set_begin_attributes
 from devices import Telemetry
+from others.Exceptions import StopSimulationException
 
 TIME_INTERVAL_FOR_NOT_RIDING = 30
 
@@ -63,7 +64,7 @@ def simulate_ride(start_time, scooter):
     battery = scooter.last_telemetry.battery
     battery_drop_step, time_step = random.randrange(10, int(battery)) / len(points), datetime.timedelta(
         seconds=time / len(points))
-    battery_temp = random.randint(20, 60)
+    battery_temp = scooter.last_telemetry.battery_temp
     battery_temp_end = battery_temp + random.randint(5, 19)
     battery_temp_rise_step = (battery_temp_end - battery_temp) / len(points)
     time_of_ride = 0
@@ -72,8 +73,8 @@ def simulate_ride(start_time, scooter):
     pricing = 0
     for idx, point in enumerate(points):
         start_time += time_step
-        battery -= battery_drop_step
-        battery_temp += battery_temp_rise_step
+        battery -= scooter.battery_drop_step(battery_drop_step)
+        battery_temp -= scooter.battery_raise_temp_step(battery_temp_rise_step)
         time_of_ride += time_step.seconds
         kilometers_distance += distance.distance(point, prev_point).km
         scooter.last_known_point = point
@@ -101,9 +102,12 @@ def simulate_ride(start_time, scooter):
                               True,
                               )
         scooter.last_telemetry = telemetry
+        if battery <= 5:
+            scooter.last_telemetry.battery = 0
         yield telemetry.get_telemetry()
         prev_point = point
-    scooter.send_end(scooter.last_telemetry.get_telemetry())
+        if battery <= 5:
+            raise StopSimulationException()
 
 
 def simulate_stop(scooter):
@@ -146,27 +150,31 @@ def simulate_stop(scooter):
         yield scooter.last_telemetry.get_telemetry()
 
 
-def simulate(year, month, day, hour, minutes, seconds, scooter):
+def simulate(year, month, day, hour, minutes, seconds, scooter, simulation_times=random.randint(5, 10), mode="send"):
     date = datetime.datetime(year, month, day, hour, minutes, seconds)
     scooter.last_telemetry.time = date.timestamp()
-    # scooter.last_telemetry = Telemetry.Telemetry.get_random_telemetry(scooter, date)
-    for i in range(0, random.randint(5, 10)):
+    for i in range(0, simulation_times):
         scooter.last_telemetry.time += 10
-        scooter.send_begin(scooter.last_telemetry.get_telemetry())
-        set_begin_attributes(scooter)
-        while scooter.user_id == -1:
-            pass
-        #items = []
-        for item in simulate_ride(datetime.datetime.fromtimestamp(scooter.last_telemetry.time), scooter):
-            #items.append(item)
-            scooter.send(item)
-            # sleep(0.01)
-            # print(item)
-        for item in simulate_stop(scooter):
-            #items.append(item)
-            scooter.send(item)
-            # sleep(0.01)
-            # print(item)
-        #with open('results.txt', "w+") as file:
-         #   json.dump(items, file)
-
+        if mode == "send":
+            scooter.send_begin(scooter.last_telemetry.get_telemetry())
+            set_begin_attributes(scooter)
+        try:
+            if mode == "send":
+                while scooter.user_id == -1:
+                    pass
+            for item in simulate_ride(datetime.datetime.fromtimestamp(scooter.last_telemetry.time), scooter):
+                if mode == "send":
+                    scooter.send(item)
+                elif mode == "print":
+                    print(item)
+            if mode == "send":
+                scooter.send_end(scooter.last_telemetry.get_telemetry())
+            for item in simulate_stop(scooter):
+                if mode == "send":
+                    scooter.send(item)
+                elif mode == "print":
+                    print(item)
+        except StopSimulationException:
+            scooter.send_end(scooter.last_telemetry)
+            scooter.last_telemetry.battery = 90
+            continue
