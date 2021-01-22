@@ -43,13 +43,16 @@ def get_shift():
     return vertical, horizontal
 
 
-def get_basic(prev_point):
+def get_basic(prev_point, next_point=None):
     time = 0
     points = []
     while time == 0:
         try:
             shift = get_shift()
-            coords = (prev_point, (prev_point[0] + shift[0], prev_point[1] + shift[1]))
+            if next_point is None:
+                coords = (prev_point, (prev_point[0] + shift[0], prev_point[1] + shift[1]))
+            else:
+                coords = (prev_point, next_point)
             routes = get_client().directions(coords, profile='cycling-regular', format="geojson")
             time = routes.get('features')[0].get('properties').get('summary').get('duration')
             points = routes.get('features')[0].get('geometry').get('coordinates')
@@ -59,8 +62,8 @@ def get_basic(prev_point):
 
 
 # start_time = czas, w którym wysyłamy
-def simulate_ride(start_time, scooter):
-    time, points = get_basic(scooter.last_telemetry.point)
+def simulate_ride(start_time, scooter, next_point=None):
+    time, points = get_basic(scooter.last_telemetry.point, next_point)
     battery = scooter.last_telemetry.battery
     battery_drop_step, time_step = random.randrange(10, int(battery)) / len(points), datetime.timedelta(
         seconds=time / len(points))
@@ -74,7 +77,7 @@ def simulate_ride(start_time, scooter):
     for idx, point in enumerate(points):
         start_time += time_step
         battery -= scooter.battery_drop_step(battery_drop_step)
-        battery_temp -= scooter.battery_raise_temp_step(battery_temp_rise_step)
+        battery_temp += scooter.battery_raise_temp_step(battery_temp_rise_step)
         time_of_ride += time_step.seconds
         kilometers_distance += distance.distance(point, prev_point).km
         scooter.last_known_point = point
@@ -150,31 +153,37 @@ def simulate_stop(scooter):
         yield scooter.last_telemetry.get_telemetry()
 
 
+def simulate_one_ride(year, month, day, hour, minutes, seconds, scooter, mode="print", next_point=None):
+    date = datetime.datetime(year, month, day, hour, minutes, seconds)
+    scooter.last_telemetry.time = date.timestamp()
+    if mode == "send":
+        scooter.send_begin(scooter.last_telemetry.get_telemetry())
+        set_begin_attributes(scooter)
+    try:
+        if mode == "send":
+            while scooter.user_id == -1:
+                pass
+        for item in simulate_ride(datetime.datetime.fromtimestamp(scooter.last_telemetry.time), scooter, next_point):
+            if mode == "send":
+                scooter.send(item)
+            elif mode == "print":
+                print(item)
+        if mode == "send":
+            scooter.send_end(scooter.last_telemetry.get_telemetry())
+
+    except StopSimulationException:
+        if mode == "send":
+            scooter.send_end(scooter.last_telemetry)
+        scooter.last_telemetry.battery = 90
+
+
 def simulate(year, month, day, hour, minutes, seconds, scooter, simulation_times=random.randint(5, 10), mode="send"):
     date = datetime.datetime(year, month, day, hour, minutes, seconds)
     scooter.last_telemetry.time = date.timestamp()
     for i in range(0, simulation_times):
-        scooter.last_telemetry.time += 10
-        if mode == "send":
-            scooter.send_begin(scooter.last_telemetry.get_telemetry())
-            set_begin_attributes(scooter)
-        try:
+        simulate_one_ride(year, month, day, hour, minutes, seconds, scooter, mode)
+        for item in simulate_stop(scooter):
             if mode == "send":
-                while scooter.user_id == -1:
-                    pass
-            for item in simulate_ride(datetime.datetime.fromtimestamp(scooter.last_telemetry.time), scooter):
-                if mode == "send":
-                    scooter.send(item)
-                elif mode == "print":
-                    print(item)
-            if mode == "send":
-                scooter.send_end(scooter.last_telemetry.get_telemetry())
-            for item in simulate_stop(scooter):
-                if mode == "send":
-                    scooter.send(item)
-                elif mode == "print":
-                    print(item)
-        except StopSimulationException:
-            scooter.send_end(scooter.last_telemetry)
-            scooter.last_telemetry.battery = 90
-            continue
+                scooter.send(item)
+            elif mode == "print":
+                print(item)
