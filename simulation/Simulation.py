@@ -153,9 +153,7 @@ def simulate_stop(scooter):
         yield scooter.last_telemetry.get_telemetry()
 
 
-def simulate_one_ride(year, month, day, hour, minutes, seconds, scooter, mode="print", next_point=None):
-    date = datetime.datetime(year, month, day, hour, minutes, seconds)
-    scooter.last_telemetry.time = date.timestamp()
+def simulate_one_ride(scooter, mode="print", next_point=None):
     if mode == "send":
         scooter.send_begin(scooter.last_telemetry.get_telemetry())
         set_begin_attributes(scooter)
@@ -180,11 +178,9 @@ def simulate_one_ride(year, month, day, hour, minutes, seconds, scooter, mode="p
         scooter.last_telemetry.time += 10600
 
 
-def simulate(year, month, day, hour, minutes, seconds, scooter, simulation_times=random.randint(5, 10), mode="send"):
-    date = datetime.datetime(year, month, day, hour, minutes, seconds)
-    scooter.last_telemetry.time = date.timestamp()
+def simulate(scooter, simulation_times=random.randint(5, 10), mode="send"):
     for i in range(0, simulation_times):
-        simulate_one_ride(year, month, day, hour, minutes, seconds, scooter, mode)
+        simulate_one_ride(scooter, mode)
         for item in simulate_stop(scooter):
             if mode == "send":
                 scooter.send(item)

@@ -1,4 +1,3 @@
-import json
 import random
 
 import rstr
@@ -7,8 +6,8 @@ import os
 import AWSIoTPythonSDK.MQTTLib as AWSIoTPyMQTT
 from geopy.distance import distance
 
-from others import battery_dict_file
-from others.scooter_prepare import prepare_scooter
+from devices import battery_dict_file
+from database.scooter_prepare import prepare_scooter
 
 dir_path = os.path.dirname(os.path.realpath(__file__)) + "\\"
 ENDPOINT = "a1r8jjr1mg7i8s-ats.iot.us-east-1.amazonaws.com"
@@ -43,12 +42,6 @@ class Scooter:
         self.mac = None
         self.ride = -1
         self.vehicle_type = 1
-        # if self.vehicle_type == 1:
-        #     self.battery_model = ""
-        # elif self.vehicle_type == 2:
-        #     self.battery_model = "Dualtron Thunder"
-        # elif vehicle_type == 3:
-        #     self.battery_model = "AGDA Electirc"
         self.user_id = -1
         prepare_scooter(self)
         self.configure_mqtt()

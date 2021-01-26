@@ -64,7 +64,7 @@ class Telemetry:
                               scooter.ride,
                               battery,
                               points[0],
-                              start_time.timestamp(),
+                              start_time,
                               round(battery_temp, 2),
                               False,
                               scooter.battery_model,
