@@ -5,7 +5,9 @@ import rstr
 import string
 import os
 import AWSIoTPythonSDK.MQTTLib as AWSIoTPyMQTT
+from geopy.distance import distance
 
+from others import battery_dict_file
 from others.scooter_prepare import prepare_scooter
 
 dir_path = os.path.dirname(os.path.realpath(__file__)) + "\\"
@@ -79,9 +81,12 @@ class Scooter:
     def set_battery_raise_temp_function(self, function):
         self.battery_raise_temp_function = function
 
-    def battery_drop_step(self, step):
+    def battery_drop_step(self, point):
         if self.battery_drop_function is None:
-            return self.last_telemetry.battery - step
+            km_distance = distance(point, self.last_known_point).km
+            drop = 100 * km_distance / battery_dict_file.max_battery_distance_dict.\
+                get(self.battery_model, battery_dict_file.DEFAULT_BATTERY_MAX_DISTANCE)
+            return drop
         else:
             return self.battery_drop_function(self)
 
@@ -90,3 +95,8 @@ class Scooter:
             return self.last_telemetry.battery_temp - step
         else:
             return self.battery_raise_temp_function(self)
+
+    def get_left_kilometers(self):
+        battery = self.last_telemetry.battery
+        return battery * battery_dict_file.max_battery_distance_dict.\
+            get(self.battery_model, battery_dict_file.DEFAULT_BATTERY_MAX_DISTANCE)

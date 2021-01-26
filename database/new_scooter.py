@@ -12,7 +12,7 @@ def scooter_from_dict(**kwargs):
     scooter = create_new_scooter_and_get_its_id(vehicle_type, mac, battery_model)
 
     scooter.last_known_point = (kwargs.get('y', 19.909286), kwargs.get('x', 50.088594))
-    scooter.last_telemetry.battery = kwargs.get('bettery_level', 100)
+    scooter.last_telemetry.battery = kwargs.get('battery_level', 100)
     scooter.last_telemetry.point = scooter.last_known_point
     scooter.last_telemetry.time = kwargs.get('time', datetime.timestamp(datetime.now()))
     scooter.last_telemetry.battery_temp = kwargs.get('battery_temp', 30)
@@ -23,10 +23,10 @@ class ScooterFactory:
     @staticmethod
     def create(**kwargs):
         scooter = scooter_from_dict(**kwargs)
-        drop_function = lambda scooter: ScooterFactory.new_scooter_battery_drop_function(scooter)
-        raise_function = lambda scooter: ScooterFactory.new_scooter_battery_temp_raise_function(scooter)
-        scooter.set_battery_drop_function(drop_function)
-        scooter.set_battery_raise_temp_function(raise_function)
+        # drop_function = lambda scooter: ScooterFactory.new_scooter_battery_drop_function(scooter)
+        # raise_function = lambda scooter: ScooterFactory.new_scooter_battery_temp_raise_function(scooter)
+        # scooter.set_battery_drop_function(drop_function)
+        # scooter.set_battery_raise_temp_function(raise_function)
         return scooter
 
     @staticmethod

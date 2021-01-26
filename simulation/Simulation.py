@@ -65,7 +65,7 @@ def get_basic(prev_point, next_point=None):
 def simulate_ride(start_time, scooter, next_point=None):
     time, points = get_basic(scooter.last_telemetry.point, next_point)
     battery = scooter.last_telemetry.battery
-    battery_drop_step, time_step = random.randrange(10, int(battery)) / len(points), datetime.timedelta(
+    time_step = datetime.timedelta(
         seconds=time / len(points))
     battery_temp = scooter.last_telemetry.battery_temp
     battery_temp_end = battery_temp + random.randint(5, 19)
@@ -76,7 +76,7 @@ def simulate_ride(start_time, scooter, next_point=None):
     pricing = 0
     for idx, point in enumerate(points):
         start_time += time_step
-        battery -= scooter.battery_drop_step(battery_drop_step)
+        battery -= scooter.battery_drop_step(point)
         battery_temp += scooter.battery_raise_temp_step(battery_temp_rise_step)
         time_of_ride += time_step.seconds
         kilometers_distance += distance.distance(point, prev_point).km
@@ -174,7 +174,10 @@ def simulate_one_ride(year, month, day, hour, minutes, seconds, scooter, mode="p
     except StopSimulationException:
         if mode == "send":
             scooter.send_end(scooter.last_telemetry)
+        if mode == "print":
+            print("Too low battery for continue riding!")
         scooter.last_telemetry.battery = 90
+        scooter.last_telemetry.time += 10600
 
 
 def simulate(year, month, day, hour, minutes, seconds, scooter, simulation_times=random.randint(5, 10), mode="send"):
