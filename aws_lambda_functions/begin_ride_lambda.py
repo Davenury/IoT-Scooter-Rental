@@ -48,17 +48,17 @@ def handler(event, contex):
             ride_id = cur.fetchone()[0]
             print(ride_id)
 
-            client = boto3.client('iot-data')
-
-            response = client.publish(
-                topic="scooter/{0}/begin_response".format(event['scooter_id']),
-                qos=1,
-                payload=json.dumps({
-                    'client_id': client_id,
-                    'ride_id': ride_id
-                })
-            )
-
+            # client = boto3.client('iot-data')
+            # print("here")
+            # response = client.publish(
+            #        topic="scooter/{0}/begin_response".format(event['scooter_id']),
+            #        qos=1,
+            #        payload=json.dumps({
+            #            'client_id': client_id,
+            #            'ride_id': ride_id
+            #        })
+            #    )
+            # print("here2")
 
     finally:
         try:

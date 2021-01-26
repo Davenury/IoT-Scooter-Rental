@@ -30,12 +30,7 @@ def handler(event, contex):
              event['is_riding'], event['reserved'], event['ready_to_ride'], event['zone_id'])
         )
 
-        if event['is_riding']:
-            cur.execute(
-                'update rides set kilometers_distance=%s, pricing=%s, end_time=to_timestamp(%s) where id=%s',
-                (event['kilometers_distance'], event['pricing'], event['time'], event['ride_id'])
-            )
-
+        state = None
         if event['is_riding']:
             state = 'IN_RUN'
         elif event['is_charging'] or event['reserved_by'] != -1:
