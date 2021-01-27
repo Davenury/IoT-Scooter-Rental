@@ -4,6 +4,10 @@
 ### Table of contents
 * [Documentation](#documentation)
 * [Code structure](#code-structure)
+* [How to get this to work?](#how-to-get-this-to-work)
+ * [How to run full simulation?](#how-to-run-full-simulation)
+ * [How to run one simulation for one scooter?](#how-to-run-one-simulation-for-one-scooter)
+* [Create your own scooter!](#make-your-own-scooter)
 
 ### Documentation
 Documentation (in Polish Language) can be read at https://docs.google.com/document/d/1zEjy7z5E_UMGPCno7TT_twpnFpKNj3joK38SD58azTg/edit?usp=sharing.
