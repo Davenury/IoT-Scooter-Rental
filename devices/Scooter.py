@@ -33,7 +33,7 @@ def get_random_mac():
 
 
 class Scooter:
-    def __init__(self, id):
+    def __init__(self, id, are_certificates_necessary=False):
         self.AWSIoTMQTTClient = AWSIoTPyMQTT.AWSIoTMQTTClient(str(id))
         self.id = id
         self.battery_model = get_random_string(6)  # -> random battery model
@@ -45,7 +45,8 @@ class Scooter:
         self.vehicle_type = 1
         self.user_id = -1
         prepare_scooter(self)
-        self.configure_mqtt()
+        if are_certificates_necessary:
+            self.configure_mqtt()
         self.battery_drop_function = None
         self.battery_raise_temp_function = None
 

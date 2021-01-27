@@ -5,7 +5,7 @@ sys.path.append("..")
 from devices.Scooter import Scooter
 from simulation.Simulation import simulate
 
-scooters = [Scooter(i+1) for i in range(10)]
+scooters = [Scooter(i+1, False) for i in range(10)] # change False to True, when you'll change mode to send
 
 
 def threading_fun(scooter):
