@@ -6,7 +6,8 @@ from geopy import distance
 import openrouteservice
 import random
 import datetime
-
+import sys
+sys.path.append("..")
 from database.begin_ride import set_begin_attributes
 from devices import Telemetry
 from others.Exceptions import StopSimulationException
@@ -29,7 +30,7 @@ def get_price(zone, time_step):
 
 
 def get_client():
-    with open('..\\others\\credentials.json') as json_file:
+    with open('../certificates/credentials.json') as json_file:
         data = json.load(json_file)
 
     key = data.get('key')

@@ -1,6 +1,8 @@
 import json
 import random
 import datetime
+import sys
+sys.path.append("..")
 from simulation.Simulation import get_basic, get_zone
 
 

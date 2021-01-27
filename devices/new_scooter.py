@@ -1,7 +1,8 @@
 from datetime import datetime
 
 import psycopg2
-
+import sys
+sys.path.append("..")
 from devices.Scooter import Scooter, get_random_mac, get_random_string
 
 

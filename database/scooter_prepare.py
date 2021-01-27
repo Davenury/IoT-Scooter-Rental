@@ -2,7 +2,8 @@ from datetime import datetime
 from time import sleep
 
 import psycopg2
-
+import sys
+sys.path.append("..")
 from devices import Scooter
 from devices import Telemetry
 

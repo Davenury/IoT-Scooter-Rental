@@ -1,5 +1,6 @@
 import random
-
+import sys
+sys.path.append("..")
 import rstr
 import string
 import os

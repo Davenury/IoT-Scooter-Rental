@@ -1,3 +1,6 @@
+import sys
+sys.path.append("..")
+
 from devices.new_scooter import ScooterFactory
 from simulation.Simulation import simulate_one_ride
 

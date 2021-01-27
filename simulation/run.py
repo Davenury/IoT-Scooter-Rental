@@ -1,6 +1,7 @@
 import random
 import threading
-
+import sys
+sys.path.append("..")
 from devices.Scooter import Scooter
 from simulation.Simulation import simulate
 
