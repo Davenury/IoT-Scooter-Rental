@@ -5,8 +5,8 @@
 * [Documentation](#documentation)
 * [Code structure](#code-structure)
 * [How to get this to work?](#how-to-get-this-to-work)
- * [How to run full simulation?](#how-to-run-full-simulation)
- * [How to run one simulation for one scooter?](#how-to-run-one-simulation-for-one-scooter)
+  * [How to run full simulation?](#how-to-run-full-simulation)
+  * [How to run one simulation for one scooter?](#how-to-run-one-simulation-for-one-scooter)
 * [Create your own scooter!](#make-your-own-scooter)
 
 ### Documentation
