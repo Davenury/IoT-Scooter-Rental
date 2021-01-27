@@ -23,10 +23,11 @@ class ScooterFactory:
     @staticmethod
     def create(**kwargs):
         scooter = scooter_from_dict(**kwargs)
-        # drop_function = lambda scooter: ScooterFactory.new_scooter_battery_drop_function(scooter)
-        # raise_function = lambda scooter: ScooterFactory.new_scooter_battery_temp_raise_function(scooter)
-        # scooter.set_battery_drop_function(drop_function)
-        # scooter.set_battery_raise_temp_function(raise_function)
+        if kwargs.get("set_custom_battery_functions", False):
+            drop_function = lambda scooter: ScooterFactory.new_scooter_battery_drop_function(scooter)
+            raise_function = lambda scooter: ScooterFactory.new_scooter_battery_temp_raise_function(scooter)
+            scooter.set_battery_drop_function(drop_function)
+            scooter.set_battery_raise_temp_function(raise_function)
         return scooter
 
     @staticmethod
